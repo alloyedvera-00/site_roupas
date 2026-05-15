@@ -7,7 +7,7 @@ export default function NotFundScreen() {
       <Stack.Screen options={{ title: 'oops! algo deu errado' }}/>
       <View style={styles.container}>
         <Link href= "/" style={styles.button}>
-         voltar para a tela inicial!
+         VOLTAR
         </Link>
       </View>
     </>
