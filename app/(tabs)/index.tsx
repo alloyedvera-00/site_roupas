@@ -2,12 +2,12 @@ import { View, StyleSheet, Image, Dimensions } from "react-native";
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 
-import Button from '@/components/Button';
+import IconButton from '@/components/IconButton';
 
 const PlaceholderImage = require('@/assets/images/background-image.webp');
 
 const { width } = Dimensions.get('window');
-const isMobile = width < 768; // Define se é mobile
+const isMobile = width < 768;
 
 export default function Index() {
   const pickImageAsync = async () => {
@@ -18,7 +18,6 @@ export default function Index() {
     });
      
     if (!result.canceled) {
-      // Navega pro editor com a imagem selecionada
       router.push({
         pathname: '/editImage',
         params: { imageUri: result.assets[0].uri }
@@ -31,6 +30,7 @@ export default function Index() {
   return (
     <View style={styles.container}>
       <View style={[styles.contentContainer, isMobile && styles.contentContainerMobile]}>
+
         {/* Imagem vertical */}
         <View style={styles.imageContainer}>
           <Image 
@@ -40,11 +40,13 @@ export default function Index() {
           />
         </View>
 
-        {/* Botões */}
+        {/* Botões com IconButton */}
         <View style={[styles.buttonsContainer, isMobile && styles.buttonsContainerMobile]}>
-          <Button theme="primary" label="Escolher fit" onPress={pickImageAsync} />
-          <Button label="Ver stock" onPress={() => router.push('/toDoList')} />
+          <IconButton icon="photo-camera" label="Escolher fit" onPress={pickImageAsync} />
+          <IconButton icon="list" label="Ver stock" onPress={() => router.push('/toDoList')} />
+          <IconButton icon="create" label="Editor" onPress={() => router.push('/editImage')} />
         </View>
+
       </View>
     </View>
   );
@@ -90,10 +92,17 @@ const styles = StyleSheet.create({
   buttonsContainer: {
     flex: 1,
     justifyContent: 'center',
+    alignItems: 'center',
     gap: 16,
+    paddingVertical: 16,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: '#222',
   },
   buttonsContainerMobile: {
+    flexDirection: 'row',
     width: '100%',
     flex: 0,
+    justifyContent: 'center',
   },
 });

@@ -3,6 +3,7 @@ import { View, StyleSheet, ScrollView, TouchableOpacity, Text, Image } from 'rea
 import { useLocalSearchParams, router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import IconButton from '@/components/IconButton';
 
 // Stickers pré-disponíveis
 const STICKERS = [
@@ -23,10 +24,8 @@ export default function EditImageScreen() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [stickers, setStickers] = useState<Array<{ id: string; emoji: string; x: number; y: number }>>([]);
 
-  // Carrega a imagem quando recebe o parâmetro
   useEffect(() => {
     if (params.imageUri) {
-      console.log('Imagem recebida:', params.imageUri);
       setSelectedImage(params.imageUri as string);
     }
   }, [params.imageUri]);
@@ -53,9 +52,7 @@ export default function EditImageScreen() {
     setStickers([...stickers, newSticker]);
   };
 
-  const clearStickers = () => {
-    setStickers([]);
-  };
+  const clearStickers = () => setStickers([]);
 
   return (
     <ScrollView style={styles.container}>
@@ -72,14 +69,10 @@ export default function EditImageScreen() {
                 style={styles.image}
                 resizeMode="cover"
               />
-              {/* Stickers sobre a imagem */}
               {stickers.map((sticker) => (
                 <Text
                   key={sticker.id}
-                  style={[
-                    styles.sticker,
-                    { left: sticker.x, top: sticker.y },
-                  ]}
+                  style={[styles.sticker, { left: sticker.x, top: sticker.y }]}
                 >
                   {sticker.emoji}
                 </Text>
@@ -93,22 +86,11 @@ export default function EditImageScreen() {
           )}
         </View>
 
-        {/* Info da imagem (debug) */}
-        {selectedImage && (
-          <Text style={styles.debugText}>✓ Imagem carregada</Text>
-        )}
-
-        {/* Botões de ação */}
+        {/* Botões de ação com IconButton */}
         <View style={styles.actionButtons}>
-          <TouchableOpacity style={styles.actionButton} onPress={pickImageAsync}>
-            <FontAwesome name="camera" size={20} color="#0a0a0a" />
-            <Text style={styles.actionButtonText}>TROCAR FOTO</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.actionButtonSecondary} onPress={clearStickers}>
-            <FontAwesome name="trash-o" size={20} color="#ff4444" />
-            <Text style={styles.actionButtonTextSecondary}>LIMPAR</Text>
-          </TouchableOpacity>
+          <IconButton icon="photo-camera" label="Trocar" onPress={pickImageAsync} />
+          <IconButton icon="delete" label="Limpar" onPress={clearStickers} />
+          <IconButton icon="arrow-back" label="Voltar" onPress={() => router.push('/')} />
         </View>
 
         {/* Grid de stickers */}
@@ -127,14 +109,6 @@ export default function EditImageScreen() {
             ))}
           </View>
         </View>
-
-        {/* Botão voltar */}
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => router.push('/')}>
-          <FontAwesome name="arrow-left" size={16} color="#00ff87" />
-          <Text style={styles.backButtonText}>VOLTAR PRO DROP</Text>
-        </TouchableOpacity>
       </View>
     </ScrollView>
   );
@@ -171,7 +145,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     borderWidth: 2,
     borderColor: '#222',
-    marginBottom: 12,
+    marginBottom: 20,
     position: 'relative',
     overflow: 'hidden',
   },
@@ -192,13 +166,6 @@ const styles = StyleSheet.create({
     marginTop: 16,
     textAlign: 'center',
   },
-  debugText: {
-    color: '#00ff87',
-    fontSize: 10,
-    textAlign: 'center',
-    marginBottom: 12,
-    letterSpacing: 1,
-  },
   sticker: {
     position: 'absolute',
     fontSize: 48,
@@ -206,47 +173,16 @@ const styles = StyleSheet.create({
   },
   actionButtons: {
     flexDirection: 'row',
-    gap: 12,
+    justifyContent: 'center',
+    gap: 16,
     marginBottom: 30,
-  },
-  actionButton: {
-    flex: 1,
-    backgroundColor: '#00ff87',
     paddingVertical: 16,
-    borderRadius: 4,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    borderWidth: 2,
-    borderColor: '#00ff87',
-  },
-  actionButtonText: {
-    color: '#0a0a0a',
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 1.2,
-  },
-  actionButtonSecondary: {
-    flex: 1,
-    backgroundColor: 'transparent',
-    paddingVertical: 16,
-    borderRadius: 4,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    borderWidth: 2,
-    borderColor: '#ff4444',
-  },
-  actionButtonTextSecondary: {
-    color: '#ff4444',
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 1.2,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: '#222',
   },
   stickersSection: {
-    marginBottom: 30,
+    marginBottom: 40,
   },
   stickersTitulo: {
     fontSize: 16,
@@ -281,23 +217,5 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     letterSpacing: 0.5,
     textAlign: 'center',
-  },
-  backButton: {
-    backgroundColor: 'transparent',
-    paddingVertical: 16,
-    borderRadius: 4,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    borderWidth: 2,
-    borderColor: '#333',
-    marginBottom: 40,
-  },
-  backButtonText: {
-    color: '#00ff87',
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 1.2,
   },
 });
