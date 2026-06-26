@@ -1,28 +1,70 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Text, Image } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import {
+  View, StyleSheet, ScrollView, Text, Image,
+  PanResponder, Animated,
+} from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import IconButton from '@/components/IconButton';
+import EmojiPicker from '@/components/EmojiPicker';
 
-// Stickers pré-disponíveis
-const STICKERS = [
-  { id: '1', emoji: '🔥', name: 'Fire' },
-  { id: '2', emoji: '⚡', name: 'Lightning' },
-  { id: '3', emoji: '💯', name: 'Hundred' },
-  { id: '4', emoji: '👕', name: 'Shirt' },
-  { id: '5', emoji: '👟', name: 'Sneaker' },
-  { id: '6', emoji: '🧢', name: 'Cap' },
-  { id: '7', emoji: '😎', name: 'Cool' },
-  { id: '8', emoji: '💎', name: 'Diamond' },
-  { id: '9', emoji: '🎨', name: 'Art' },
-  { id: '10', emoji: '✨', name: 'Sparkle' },
-];
+type Sticker = {
+  id: string;
+  emoji: string;
+  x: number;
+  y: number;
+};
+
+type DraggableStickerProps = {
+  sticker: Sticker;
+  setScrollEnabled: (v: boolean) => void;
+};
+
+function DraggableSticker({ sticker, setScrollEnabled }: DraggableStickerProps) {
+  const pan = useRef(new Animated.ValueXY({ x: sticker.x, y: sticker.y })).current;
+  const currentPos = useRef({ x: sticker.x, y: sticker.y });
+
+  useEffect(() => {
+    const id = pan.addListener((v) => { currentPos.current = v; });
+    return () => pan.removeListener(id);
+  }, [pan]);
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onPanResponderGrant: () => {
+        setScrollEnabled(false);
+        pan.setOffset(currentPos.current);
+        pan.setValue({ x: 0, y: 0 });
+      },
+      onPanResponderMove: Animated.event(
+        [null, { dx: pan.x, dy: pan.y }],
+        { useNativeDriver: false }
+      ),
+      onPanResponderRelease: () => {
+        setScrollEnabled(true);
+        pan.flattenOffset();
+      },
+    })
+  ).current;
+
+  return (
+    <Animated.View
+      style={[styles.stickerWrapper, { transform: pan.getTranslateTransform() }]}
+      {...panResponder.panHandlers}
+    >
+      <Text style={styles.stickerText}>{sticker.emoji}</Text>
+    </Animated.View>
+  );
+}
 
 export default function EditImageScreen() {
   const params = useLocalSearchParams();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [stickers, setStickers] = useState<Array<{ id: string; emoji: string; x: number; y: number }>>([]);
+  const [stickers, setStickers] = useState<Sticker[]>([]);
+  const [pickerVisible, setPickerVisible] = useState(false);
+  const [scrollEnabled, setScrollEnabled] = useState(true);
 
   useEffect(() => {
     if (params.imageUri) {
@@ -31,51 +73,44 @@ export default function EditImageScreen() {
   }, [params.imageUri]);
 
   const pickImageAsync = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
+    const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       allowsEditing: true,
       quality: 1,
     });
-
-    if (!result.canceled) {
-      setSelectedImage(result.assets[0].uri);
-    }
+    if (!result.canceled) setSelectedImage(result.assets[0].uri);
   };
 
   const addSticker = (emoji: string) => {
-    const newSticker = {
-      id: Date.now().toString(),
-      emoji,
-      x: Math.random() * 250,
-      y: Math.random() * 350,
-    };
-    setStickers([...stickers, newSticker]);
+    setStickers((prev) => [
+      ...prev,
+      { id: Date.now().toString(), emoji, x: 100, y: 150 },
+    ]);
   };
 
   const clearStickers = () => setStickers([]);
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} scrollEnabled={scrollEnabled}>
       <View style={styles.content}>
         <Text style={styles.titulo}>EDIT YOUR FIT</Text>
         <Text style={styles.subtitulo}>Adicione stickers na sua peça</Text>
 
-        {/* Área da imagem com stickers */}
+        {/* Área da imagem */}
         <View style={styles.imageContainer}>
           {selectedImage ? (
             <>
-              <Image 
-                source={{ uri: selectedImage }} 
+              <Image
+                source={{ uri: selectedImage }}
                 style={styles.image}
                 resizeMode="cover"
               />
               {stickers.map((sticker) => (
-                <Text
+                <DraggableSticker
                   key={sticker.id}
-                  style={[styles.sticker, { left: sticker.x, top: sticker.y }]}
-                >
-                  {sticker.emoji}
-                </Text>
+                  sticker={sticker}
+                  setScrollEnabled={setScrollEnabled}
+                />
               ))}
             </>
           ) : (
@@ -86,30 +121,21 @@ export default function EditImageScreen() {
           )}
         </View>
 
-        {/* Botões de ação com IconButton */}
+        {/* Botões de ação */}
         <View style={styles.actionButtons}>
           <IconButton icon="photo-camera" label="Trocar" onPress={pickImageAsync} />
+          <IconButton icon="emoji-emotions" label="Sticker" onPress={() => setPickerVisible(true)} />
           <IconButton icon="delete" label="Limpar" onPress={clearStickers} />
           <IconButton icon="arrow-back" label="Voltar" onPress={() => router.push('/')} />
         </View>
-
-        {/* Grid de stickers */}
-        <View style={styles.stickersSection}>
-          <Text style={styles.stickersTitulo}>STICKERS DISPONÍVEIS</Text>
-          <View style={styles.stickersGrid}>
-            {STICKERS.map((sticker) => (
-              <TouchableOpacity
-                key={sticker.id}
-                style={styles.stickerButton}
-                onPress={() => addSticker(sticker.emoji)}
-              >
-                <Text style={styles.stickerEmoji}>{sticker.emoji}</Text>
-                <Text style={styles.stickerName}>{sticker.name}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
       </View>
+
+      {/* Modal do EmojiPicker */}
+      <EmojiPicker
+        isVisible={pickerVisible}
+        onClose={() => setPickerVisible(false)}
+        onSelectEmoji={addSticker}
+      />
     </ScrollView>
   );
 }
@@ -166,56 +192,21 @@ const styles = StyleSheet.create({
     marginTop: 16,
     textAlign: 'center',
   },
-  sticker: {
+  stickerWrapper: {
     position: 'absolute',
-    fontSize: 48,
     zIndex: 10,
+  },
+  stickerText: {
+    fontSize: 48,
   },
   actionButtons: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 16,
+    gap: 12,
     marginBottom: 30,
     paddingVertical: 16,
     borderTopWidth: 1,
     borderBottomWidth: 1,
     borderColor: '#222',
-  },
-  stickersSection: {
-    marginBottom: 40,
-  },
-  stickersTitulo: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#00ff87',
-    letterSpacing: 1.5,
-    marginBottom: 16,
-  },
-  stickersGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  stickerButton: {
-    width: '18%',
-    aspectRatio: 1,
-    backgroundColor: '#1a1a1a',
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: '#222',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 8,
-  },
-  stickerEmoji: {
-    fontSize: 32,
-    marginBottom: 4,
-  },
-  stickerName: {
-    fontSize: 8,
-    color: '#666',
-    fontWeight: '600',
-    letterSpacing: 0.5,
-    textAlign: 'center',
   },
 });

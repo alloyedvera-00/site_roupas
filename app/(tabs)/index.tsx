@@ -1,8 +1,9 @@
-import { View, StyleSheet, Image, Dimensions } from "react-native";
+import { View, StyleSheet, Dimensions } from "react-native";
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
-
 import IconButton from '@/components/IconButton';
+import ImageViewer from '@/components/ImageViewer';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 const PlaceholderImage = require('@/assets/images/background-image.webp');
 
@@ -16,7 +17,7 @@ export default function Index() {
       allowsEditing: true,
       quality: 1,
     });
-     
+
     if (!result.canceled) {
       router.push({
         pathname: '/editImage',
@@ -28,19 +29,11 @@ export default function Index() {
   };
 
   return (
-    <View style={styles.container}>
+    <GestureHandlerRootView style={styles.container}>
       <View style={[styles.contentContainer, isMobile && styles.contentContainerMobile]}>
 
-        {/* Imagem vertical */}
-        <View style={styles.imageContainer}>
-          <Image 
-            source={PlaceholderImage} 
-            style={[styles.image, isMobile && styles.imageMobile]}
-            resizeMode="cover"
-          />
-        </View>
+        <ImageViewer imgSource={PlaceholderImage} />
 
-        {/* Botões com IconButton */}
         <View style={[styles.buttonsContainer, isMobile && styles.buttonsContainerMobile]}>
           <IconButton icon="photo-camera" label="Escolher fit" onPress={pickImageAsync} />
           <IconButton icon="list" label="Ver stock" onPress={() => router.push('/toDoList')} />
@@ -48,7 +41,7 @@ export default function Index() {
         </View>
 
       </View>
-    </View>
+    </GestureHandlerRootView>          
   );
 }
 
@@ -69,25 +62,6 @@ const styles = StyleSheet.create({
   contentContainerMobile: {
     flexDirection: 'column',
     gap: 32,
-  },
-  imageContainer: {
-    borderWidth: 3,
-    borderColor: '#00ff87',
-    borderRadius: 4,
-    overflow: 'hidden',
-    shadowColor: '#00ff87',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  image: {
-    width: 260,
-    height: 420,
-  },
-  imageMobile: {
-    width: 280,
-    height: 400,
   },
   buttonsContainer: {
     flex: 1,
