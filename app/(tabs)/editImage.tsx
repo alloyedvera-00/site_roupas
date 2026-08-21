@@ -8,6 +8,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as MediaLibrary from 'expo-media-library';
 import { captureRef } from 'react-native-view-shot';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import * as Sharing from 'expo-sharing';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import IconButton from '@/components/IconButton';
 import EmojiPicker from '@/components/EmojiPicker';
@@ -135,26 +136,33 @@ export default function EditImageScreen() {
     );
   };
 
-  const downloadImage = async () => {
-    if (!selectedImage) {
-      alert('Selecione uma imagem primeiro.');
+const downloadImage = async () => {
+  if (!selectedImage) {
+    alert('Selecione uma imagem primeiro.');
+    return;
+  }
+  try {
+    const uri = await captureRef(imageContainerRef, {
+      format: 'jpg',
+      quality: 0.95,
+      result: 'tmpfile',
+    });
+
+    const isAvailable = await Sharing.isAvailableAsync();
+    if (!isAvailable) {
+      alert('Compartilhamento não disponível neste dispositivo.');
       return;
     }
-    try {
-      const { status } = await MediaLibrary.requestPermissionsAsync();
-      if (status !== 'granted') {
-        alert('Permissão negada para acessar a galeria.');
-        return;
-      }
-      // captureRef captura o View diretamente, sem precisar do componente ViewShot
-      const uri = await captureRef(imageContainerRef, { format: 'jpg', quality: 0.95 });
-      await MediaLibrary.saveToLibraryAsync(uri);
-      alert('✅ Imagem salva na galeria!');
-    } catch (e) {
-      console.error(e);
-      alert('Erro ao salvar a imagem.');
-    }
-  };
+
+    await Sharing.shareAsync(uri, {
+      mimeType: 'image/jpeg',
+      dialogTitle: 'Salvar ou compartilhar imagem',
+    });
+  } catch (e) {
+    console.error(e);
+    alert('Erro ao compartilhar a imagem.');
+  }
+};
 
   const selectedSticker = stickers.find((s) => s.id === selectedStickerId);
 
